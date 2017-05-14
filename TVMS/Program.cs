@@ -9,102 +9,6 @@ namespace TVMS
 {
     class Program
     {
-        public static double[] Regr(double[][] dataMatrix)
-        {
-            int n = dataMatrix.Length, parametersCount = dataMatrix[0].Length;
-            double[] regressionCoefficients = new double[parametersCount];
-            double[] resultParameter = new double[n];
-            double[][] A1 = new double[n][];
-
-            for (int i = 0; i < n; i++)
-            {
-                A1[i] = new double[parametersCount];
-                resultParameter[i] = dataMatrix[i][parametersCount - 1];
-            }
-
-            for (int i = 0; i < n; i++)
-                A1[i][parametersCount - 1] = 1;
-
-            for (int i = 0; i < n; i++)
-                for (int j = 0; j < parametersCount - 1; j++)
-                    A1[i][j] = dataMatrix[i][j];
-
-            regressionCoefficients = MatrixFunction.MatrixVectorMultiplication(MatrixFunction.MultiplicateMatrix(MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(A1), A1)), MatrixFunction.TransposeMatrix(A1)), resultParameter);
-
-            double Qr = MatrixFunction.SumOfVectorCoordinatesSquares(MatrixFunction.MatrixVectorMultiplication(MatrixFunction.TransposeMatrix(A1), regressionCoefficients));
-            double Qost = MatrixFunction.SumOfVectorCoordinatesSquares(MatrixFunction.VectorsDifference(resultParameter, MatrixFunction.MatrixVectorMultiplication(MatrixFunction.TransposeMatrix(A1), regressionCoefficients)));
-
-            double s = Qost / (n - parametersCount - 1);
-            double[] sb = new double[parametersCount];
-            var temperory = MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(A1), A1));
-
-            for (int j = 0; j < parametersCount; j++)
-                sb[j] = s * temperory[j][j];
-
-            double t = 4.587;
-            Console.WriteLine("Коэффициенты регрессии:");
-            for (int i = 0; i < regressionCoefficients.Length; i++)
-            {
-                if (i == 0)
-                    Console.WriteLine("a = {0}", regressionCoefficients[i]);
-                else
-                    Console.WriteLine("b{0} = {1}", i, regressionCoefficients[i]);
-            }
-
-            Console.WriteLine("Значимость коэффициентов регрессии:");
-            for (int i = 0; i < parametersCount; i++)
-                Console.WriteLine("b{0} = {1}", (i + 1), regressionCoefficients[i] / sb[i]);
-
-            Console.WriteLine("Доверительные интервалы коэффициентов регрессии:");
-            for (int i = 0; i < parametersCount; i++)
-                Console.WriteLine("{0} <= b{1} <= {2}", (regressionCoefficients[i] - t * sb[i]), (i + 1), (regressionCoefficients[i] + t * sb[i]));
-
-            Console.WriteLine("Коэффициент значимости уравнения регрессии:");
-            Console.WriteLine(Qr * (n - parametersCount - 1) / (Qost * (parametersCount + 1)));
-            return regressionCoefficients;
-        }
-
-        public static double[] ElasticityCoefficient(double[][] A, double[] b)
-        {
-            double[] result = new double[A.Length];
-
-            double y = A[0].Average();
-            result[0] = b[0];
-            for (int i = 1; i < A.Length; ++i)
-                result[i] = b[i] * A[i].Average() / y;
-
-            return result;
-        }
-
-        public static double[] Prognoz(double[][] A, double[] X0)
-        {
-            int n = A.Length, m = A[0].Length;
-            double[] result = new double[m];
-            double[] Y = new double[n];
-            double[][] A1 = new double[n][];
-            for (int i = 0; i < n; i++)
-            {
-                A1[i] = new double[m];
-                Y[i] = A[i][0];
-            }
-
-            for (int i = 0; i < n; i++)
-                A1[i][0] = 1;
-
-            for (int i = 0; i < n; i++)
-                for (int j = 1; j < m; j++)
-                    A1[i][j] = A[i][j];
-
-            result = MatrixFunction.MatrixVectorMultiplication((MatrixFunction.MultiplicateMatrix(MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(A1), A1)), MatrixFunction.TransposeMatrix(A1))), Y);
-            double Qost = MatrixFunction.SumOfVectorCoordinatesSquares(MatrixFunction.VectorsDifference(Y, MatrixFunction.MatrixVectorMultiplication(A1, result)));
-            double s = Math.Sqrt(Qost / (n - m - 1));
-            double t = 4.587;
-            double[] a = new double[2];
-            a[0] = MatrixFunction.ScalarProductOfVectors(X0, result) - t * s * Math.Sqrt(MatrixFunction.ScalarProductOfVectors(MatrixFunction.TransposeMatrixVectorProduct(X0, MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(A1), A1))), X0));
-            a[1] = MatrixFunction.ScalarProductOfVectors(X0, result) + t * s * Math.Sqrt(MatrixFunction.ScalarProductOfVectors(MatrixFunction.TransposeMatrixVectorProduct(X0, MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(A1), A1))), X0));
-            return a;
-        }
-
         private static Dictionary<double, double> ReadLaplasMatrix(string path)
         {
             StreamReader fs = new StreamReader(path, Encoding.Default);
@@ -213,17 +117,38 @@ namespace TVMS
             }
             Console.WriteLine();
 
-            double[] result = Regr(matrix);
+            RegressionAnalysis  ra = new RegressionAnalysis(matrix);
+            //Console.WriteLine("Коэффициенты регрессии:");
+            //for (int i = 0; i < ra.RegressionCoefficients.Length; i++)
+            //{
+            //    if (i == 0)
+            //        Console.WriteLine("a = {0}", ra.RegressionCoefficients[i]);
+            //    else
+            //        Console.WriteLine("b{0} = {1}", i, ra.RegressionCoefficients[i]);
+            //}
+
+            Console.WriteLine("Значимость коэффициентов регрессии:");
+            for (int i = 0; i < m; i++)
+                Console.WriteLine("b{0} = {1}", (i + 1), ra.RegressionCoefficientsSignificance[i]);
+
+            Console.WriteLine("Доверительные интервалы коэффициентов регрессии:");
+            for (int i = 0; i < m; i++)
+                Console.WriteLine("{0} <= b{1} <= {2}", ra.ConfidenceIntervalsOfCoefficients[i].Item1, (i + 1), ra.ConfidenceIntervalsOfCoefficients[i].Item2);
+
+            Console.WriteLine("Коэффициент значимости уравнения регрессии:");
+            Console.WriteLine(ra.RegressionEquationSignificance);
             Console.WriteLine();
             Console.WriteLine("Коэффициенты эластичности");
-            double[] elast = ElasticityCoefficient(transpMatrix, result);
+            double[] elast = ra.ElasticityCoefficients;
             for (int u = 0; u < m; u++)
                 Console.WriteLine("x{0} = {1}", (u + 1), elast[u]);
 
-            double[] X0 = { 1, 0.92, 0.83, 5.82, 1.2, 4.25, 1.01, 1.01, 1 };
-            double[] resultat = Prognoz(matrix, X0);
+            //double[] X0 = { 1, 0.92, 0.83, 5.82, 1.2, 4.25, 1.01, 1.01, 1 };
+            //double[] resultat = Prognoz(matrix, X0);
+
+            Forecast f = new Forecast(matrix);
             Console.WriteLine("Прогнозирование");
-            Console.WriteLine(resultat[0] + " < y < " + resultat[1]);
+            Console.WriteLine(f.Value[0] + " < y < " + f.Value[1]);
             Console.WriteLine();
         }
     }
