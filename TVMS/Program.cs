@@ -75,7 +75,7 @@ namespace TVMS
             return n;
         }
 
-        static double[] ni(List<double> a, double X, double s, Dictionary<double, double> L)
+        static double[] probabilityHitsInInterval(List<double> a, double X, double s, Dictionary<double, double> L)
         {
             double[] Ni = new double[a.Count - 1];
             double t1, t2;
@@ -285,12 +285,14 @@ namespace TVMS
             {
                 for (int k = 0; k < m; ++k)
                 {
+                    //PearsonConsentCriterion pcc = new PearsonConsentCriterion();
+
                     List<double> intervals = BuildItervals(transpMatrix[k], m);
                     int[] hitsInIntervalsCount = ValueHitsInIntervalsCount(transpMatrix[k], intervals);
                     double meanSquareDeviation = MeanSquareDeviation(intervals, hitsInIntervalsCount, Xsr(intervals, hitsInIntervalsCount), n);
-                    double[] NI = ni(intervals, Xsr(intervals, hitsInIntervalsCount), meanSquareDeviation, laplasMatrix);
+                    double[] NI = probabilityHitsInInterval(intervals, Xsr(intervals, hitsInIntervalsCount), meanSquareDeviation, laplasMatrix);
+
                     Console.WriteLine("{0,20}  {1,20}        {2,15}{3,15}", "     ", "     ", "     Частота", " Вероятность");
-                    
                     for (int j = 0; j < intervals.Count - 1; j++)
                         Console.WriteLine("{0,20}   -   {1,20} {2,15}{3,15}", intervals[j], intervals[j + 1], hitsInIntervalsCount[j], NI[j]);
 
@@ -305,37 +307,36 @@ namespace TVMS
                     Console.WriteLine();
                 }
 
-                double[][] r = PairCorrelationsMatrix.GetForMatrix(MatrixFunction.TransposeMatrix(matrix));
-                StreamWriter fss = new StreamWriter("result.txt");
+                double[][] pairCorrelations = PairCorrelationsMatrix.GetForMatrix(MatrixFunction.TransposeMatrix(matrix));
                 Console.WriteLine("Матрица корреляции");
-                for (int u = 0; u < r.Length; u++)
+                for (int u = 0; u < pairCorrelations.Length; u++)
                 {
-                    for (int j = 0; j < r.Length; j++)
-                        Console.Write("{0}         ", Math.Round(r[u][j], 5));
+                    for (int j = 0; j < pairCorrelations.Length; j++)
+                        Console.Write("{0}         ", Math.Round(pairCorrelations[u][j], 5));
                     Console.WriteLine();
                 }
 
                 Console.WriteLine(); Console.WriteLine("Коэффициенты значимости для матрицы парных корреляций: ");
-                for (int u = 0; u < r.Length; u++)
+                for (int u = 0; u < pairCorrelations.Length; u++)
                 {
-                    for (int j = 0; j < r.Length; j++)
+                    for (int j = 0; j < pairCorrelations.Length; j++)
                     {
                         if (u == j)
                             Console.Write("1    ");
                         else
-                            Console.Write(Math.Round(Math.Sqrt((Math.Pow(r[u][j], 2) * (n - 2))) / (1 - Math.Pow(r[u][j], 2)), 3) + "   ");
+                            Console.Write(Math.Round(Math.Sqrt((Math.Pow(pairCorrelations[u][j], 2) * (n - 2))) / (1 - Math.Pow(pairCorrelations[u][j], 2)), 3) + "   ");
                     }
                     Console.WriteLine();
                 }
                 Console.WriteLine();
 
                 Console.WriteLine("Коэффициенты значимости:");
-                for (int u = 0; u < r.Length; u++)
-                    Console.WriteLine((Math.Pow(SelectiveMultipleCoefficient(r, u), 2)) / ((1 - Math.Pow(SelectiveMultipleCoefficient(r, u), 2)) / (n - 2)));
+                for (int u = 0; u < pairCorrelations.Length; u++)
+                    Console.WriteLine((Math.Pow(SelectiveMultipleCoefficient(pairCorrelations, u), 2)) / ((1 - Math.Pow(SelectiveMultipleCoefficient(pairCorrelations, u), 2)) / (n - 2)));
                 Console.WriteLine();
 
-                double Rmn1 = SelectiveMultipleCoefficient(r, 1);
-                double D = Math.Pow(SelectiveMultipleCoefficient(r, 1), 2);
+                double Rmn1 = SelectiveMultipleCoefficient(pairCorrelations, 1);
+                double D = Math.Pow(SelectiveMultipleCoefficient(pairCorrelations, 1), 2);
                 Console.WriteLine("Выборочный множественный коэффициент Y: " + Rmn1);
                 Console.WriteLine("Коэффициент детерминации: " + D);
                 if (D > 0.8)
@@ -343,18 +344,13 @@ namespace TVMS
 
                 Console.WriteLine();
                 Console.WriteLine("Матрица частной корреляции");
-                double[][] r1 = PartialCorrelationsMatrix.GetForMatrix(r);
+                double[][] r1 = PartialCorrelationsMatrix.GetForMatrix(pairCorrelations);
                 for (int u = 0; u < r1.Length; u++)
                 {
                     for (int j = 0; j < r1.Length; j++)
-                    {
                         Console.Write("{0,6}  ", Math.Round(r1[u][j], 4));
-                        fss.Write(Math.Round(r1[u][j], 4) + " ");
-                    }
                     Console.WriteLine();
-                    fss.WriteLine();
                 }
-                fss.Close();
                 Console.WriteLine();
 
                 double[] result = Regr(matrix);
