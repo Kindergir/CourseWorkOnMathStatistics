@@ -6,33 +6,23 @@ namespace TVMS
 {
     public class PearsonConsentCriterion
     {
-        public double[] PearsonCriterionValue { get; }
-        public double[] AverageValueX { get; }
-        public double[][] Intervals { get; }
-        public int[][] HitsInIntervalsCount { get; }
-        public double[][] HitsInIntervalsProbability { get; }
-        public double[] MeanSquareDeviation { get; }
+        public double PearsonCriterionValue { get; }
+        public double AverageValueX { get; }
+        public double[] Intervals { get; }
+        public int[] HitsInIntervalsCount { get; }
+        public double[] HitsInIntervalsProbability { get; }
+        public double MeanSquareDeviation { get; }
 
-        public PearsonConsentCriterion(double[][] dataMatrix, Dictionary<double, double> laplasMatrix)
+        public PearsonConsentCriterion(double[] parameterValues, Dictionary<double, double> laplasMatrix)
         {
             this.laplasMatrix = laplasMatrix;
-            int parametersCount = dataMatrix.Length;
-            Intervals = new double[parametersCount][];
-            HitsInIntervalsCount = new int[parametersCount][];
-            MeanSquareDeviation = new double[parametersCount];
-            HitsInIntervalsProbability = new double[parametersCount][];
-            AverageValueX = new double[parametersCount];
-            PearsonCriterionValue = new double[parametersCount];
-
-            for (int i = 0; i < parametersCount; ++i)
-            {
-                Intervals[i] = BuildItervals(dataMatrix[i], parametersCount).ToArray();
-                HitsInIntervalsCount[i] = CalcHitsInIntervalsCount(dataMatrix[i], Intervals[i]);
-                AverageValueX[i] = CalcAverageX(Intervals[i].ToList(), HitsInIntervalsCount[i]);
-                MeanSquareDeviation[i] = CalcMeanSquareDeviation(Intervals[i], HitsInIntervalsCount[i], AverageValueX[i], dataMatrix[0].Length);
-                HitsInIntervalsProbability[i] = CalcProbabilityHitsInInterval(Intervals[i], AverageValueX[i], MeanSquareDeviation[i], laplasMatrix);
-                PearsonCriterionValue[i] = PearsonTestForOneParameter(HitsInIntervalsCount[i], HitsInIntervalsProbability[i], Intervals[i].Length);
-            }
+            int parametersCount = parameterValues.Length;
+            Intervals = BuildItervals(parameterValues, parametersCount).ToArray();
+            HitsInIntervalsCount = CalcHitsInIntervalsCount(parameterValues, Intervals);
+            AverageValueX = CalcAverageX(Intervals.ToList(), HitsInIntervalsCount);
+            MeanSquareDeviation = CalcMeanSquareDeviation(Intervals, HitsInIntervalsCount, AverageValueX, parameterValues.Length);
+            HitsInIntervalsProbability = CalcProbabilityHitsInInterval(Intervals, AverageValueX, MeanSquareDeviation, laplasMatrix);
+            PearsonCriterionValue = PearsonTestForOneParameter(HitsInIntervalsCount, HitsInIntervalsProbability, Intervals.Length);
         }
 
         private Dictionary<double, double> laplasMatrix;

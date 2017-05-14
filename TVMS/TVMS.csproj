@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="KolmogorovConsentCriterion.cs" />
     <Compile Include="PearsonConsentCriterion.cs" />
     <Compile Include="PairCorrelationsMatrix.cs" />
     <Compile Include="MatrixFunction.cs" />

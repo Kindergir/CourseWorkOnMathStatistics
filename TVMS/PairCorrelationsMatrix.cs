@@ -5,23 +5,35 @@ namespace TVMS
 {
     public class PairCorrelationsMatrix
     {
-        public static double[][] GetForMatrix(double[][] matrix)
-        {
-            var averageValues = AverageValuesForAllCoefficients(matrix);
-            var squaredDevivations = SumSquaredDevivatiosForAllCofficients(matrix);
-            var devivations = SumDevivatiosForAllCofficients(matrix);
+        public double[][] CorrelationsMatrix { get; private set; }
+        public double[][] SignificanceFactorsMatrix { get; private set; }
 
-            int coefCount = matrix.Length;
-            double[][] pairCorrelationsMatrix = new double[coefCount][];
+        private double[][] dataMatrix;
+
+        public PairCorrelationsMatrix(double[][] matrix)
+        {
+            dataMatrix = matrix;
+            CalcCorrelationsMatrix();
+            CalcSignificanceFactors();
+        }
+
+        public void CalcCorrelationsMatrix()
+        {
+            var averageValues = AverageValuesForAllCoefficients(dataMatrix);
+            var squaredDevivations = SumSquaredDevivatiosForAllCofficients(dataMatrix);
+            var devivations = SumDevivatiosForAllCofficients(dataMatrix);
+
+            int coefCount = dataMatrix.Length;
+            CorrelationsMatrix = new double[coefCount][];
             for (int k = 0; k < coefCount; k++)
-                pairCorrelationsMatrix[k] = new double[coefCount];
+                CorrelationsMatrix[k] = new double[coefCount];
 
             for (int i = 0; i < coefCount; ++i)
             {
                 for (int j = i; j < coefCount; ++j)
                 {
                     if (i == j)
-                        pairCorrelationsMatrix[i][j] = 1;
+                        CorrelationsMatrix[i][j] = 1;
                     else
                     {
                         var xAverage = averageValues[i];
@@ -31,15 +43,33 @@ namespace TVMS
                         var xSquaredDevivationsSum = squaredDevivations[i];
                         var ySquaredDevivationsSum = squaredDevivations[j];
 
-                        pairCorrelationsMatrix[i][j] = (xDevivationsSum - xAverage) * (yDevivationsSum - yAverage)
+                        CorrelationsMatrix[i][j] = (xDevivationsSum - xAverage) * (yDevivationsSum - yAverage)
                                 / Math.Sqrt(xSquaredDevivationsSum * ySquaredDevivationsSum);
                     }
                 }
             }
-            return pairCorrelationsMatrix;
         }
 
-        private static double SumSquaredDeviationsOfQuantity(double[] values)
+        private void CalcSignificanceFactors()
+        {
+            SignificanceFactorsMatrix = new double[CorrelationsMatrix.Length][];
+            for (int i = 0; i < CorrelationsMatrix.Length; ++i)
+                SignificanceFactorsMatrix[i] = new double[CorrelationsMatrix.Length];
+
+            for (int i = 0; i < CorrelationsMatrix.Length; ++i)
+            {
+                for (int j = 0; j < CorrelationsMatrix.Length; ++j)
+                {
+                    if (i == j)
+                        SignificanceFactorsMatrix[i][j] = 1;
+                    else
+                        SignificanceFactorsMatrix[i][j] = Math.Round(Math.Sqrt(Math.Pow(CorrelationsMatrix[i][j], 2)*(dataMatrix[i].Length - 2))/
+                                (1 - Math.Pow(CorrelationsMatrix[i][j], 2)), 3);
+                }
+            }
+        }
+
+        private double SumSquaredDeviationsOfQuantity(double[] values)
         {
             double x = 0;
             var averageValue = values.Average();
@@ -48,7 +78,7 @@ namespace TVMS
             return x;
         }
 
-        private static double SumDeviationsOfQuantity(double[] values)
+        private double SumDeviationsOfQuantity(double[] values)
         {
             double x = 0;
             var averageValue = values.Average();
@@ -57,7 +87,7 @@ namespace TVMS
             return x;
         }
 
-        private static double[] AverageValuesForAllCoefficients(double[][] matrix)
+        private double[] AverageValuesForAllCoefficients(double[][] matrix)
         {
             double[] values = new double[matrix.Length];
             for (int i = 0; i < matrix.Length; ++i)
@@ -65,7 +95,7 @@ namespace TVMS
             return values;
         }
 
-        private static double[] SumDevivatiosForAllCofficients(double[][] matrix)
+        private double[] SumDevivatiosForAllCofficients(double[][] matrix)
         {
             double[] devivations = new double[matrix.Length];
             for (int i = 0; i < matrix.Length; ++i)
@@ -73,7 +103,7 @@ namespace TVMS
             return devivations;
         }
 
-        private static double[] SumSquaredDevivatiosForAllCofficients(double[][] matrix)
+        private double[] SumSquaredDevivatiosForAllCofficients(double[][] matrix)
         {
             double[] devivations = new double[matrix.Length];
             for (int i = 0; i < matrix.Length; ++i)
