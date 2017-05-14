@@ -43,7 +43,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConsentCriterion.cs" />
+    <Compile Include="PairCorrelationsMatrix.cs" />
     <Compile Include="MatrixFunction.cs" />
+    <Compile Include="PartialCorrelationsMatrix.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

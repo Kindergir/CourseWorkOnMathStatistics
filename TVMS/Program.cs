@@ -9,22 +9,23 @@ namespace TVMS
 {
     class Program
     {
-        static double LengthInterval(double[] d, int n)
+        static double SpotLengthInterval(double[] d, int n)
         {
             return (d.Max() - d.Min()) / (1 + 3.321 * Math.Log10(n));
         }
 
-        static List<double> Iterval(double[] d, double h)
+        static List<double> BuildItervals(double[] d, int varCount)
         {
+            var length = SpotLengthInterval(d, varCount);
             List<double> a = new List<double>();
-            double a0 = d.Min() - h / 2;
-            double b = a0 + h;
-            a.Add(d.Min() - h / 2);
-            a.Add(b);
-            while (b <= d.Max())
+            double a0 = d.Min() - length / 2;
+            double bound = a0 + length;
+            a.Add(d.Min() - length / 2);
+            a.Add(bound);
+            while (bound <= d.Max())
             {
-                b += h;
-                a.Add(b);
+                bound += length;
+                a.Add(bound);
             }
             return a;
         }
@@ -46,7 +47,7 @@ namespace TVMS
             return X / F;
         }
 
-        static double S(List<double> a, int[] n, double x, int m)
+        static double MeanSquareDeviation(List<double> a, int[] n, double x, int m)
         {
             double s = 0;
             double[] X = new double[a.Count - 1];
@@ -63,13 +64,13 @@ namespace TVMS
             return Math.Sqrt(s / m);
         }
 
-        static int[] N(double[] d, List<double> a)
+        static int[] ValueHitsInIntervalsCount(double[] values, List<double> intervals)
         {
-            int[] n = new int[a.Count - 1];
+            int[] n = new int[intervals.Count - 1];
 
-            for (int i = 0; i < a.Count - 1; ++i)
-                for (int j = 0; j < d.Length; ++j)
-                    if (d[j] > a[i] && d[j] <= a[i + 1])
+            for (int i = 0; i < intervals.Count - 1; ++i)
+                for (int j = 0; j < values.Length; ++j)
+                    if (values[j] > intervals[i] && values[j] <= intervals[i + 1])
                         n[i]++;
             return n;
         }
@@ -106,15 +107,16 @@ namespace TVMS
             return Ni;
         }
 
-        static double Pirs(int[] s, double[] p, int n)
+        static double PearsonChiSquaredTest(int[] hitsCount, double[] hitsProbability, int intervalsCount)
         {
             double sum = 0;
-            for (int i = 0; i < s.Length; ++i)
-                sum += Math.Pow(s[i] - n * p[i], 2.0) / (n * p[i]);
+            for (int i = 0; i < hitsCount.Length; ++i)
+                sum += Math.Pow(hitsCount[i] - intervalsCount * hitsProbability[i], 2.0) 
+                    / (intervalsCount * hitsProbability[i]);
             return sum;
         }
 
-        static double Kolmogorov(double[] p, int n)
+        static double KolmogorovTest(double[] p, int n)
         {
             double[] D = new double[2];
             double[] D1 = new double[p.Length];
@@ -130,80 +132,7 @@ namespace TVMS
             return D.Max();
         }
 
-        static double SumSquaredDeviationsOfQuantity(double[] d)
-        {
-            double x = 0;
-            var averageD = d.Average();
-            for (int i = 0; i < d.Length; ++i)
-                x += Math.Pow(d[i] - averageD, 2);
-            return x;
-        }
-
-        static double SumDeviationsOfQuantity(double[] d)
-        {
-            double x = 0;
-            var averageD = d.Average();
-            for (int i = 0; i < d.Length; ++i)
-                x += d[i] - averageD;
-            return x;
-        }
-
-        static double[] AverageValuesForAllCoefficients(double[][] matrix)
-        {
-            var transpMatrix = MatrixFunction.TransposeMatrix(matrix);
-            double[] values = new double[transpMatrix.Length];
-            for (int i = 0; i < transpMatrix.Length; ++i)
-                values[i] = transpMatrix[i].Average();
-            return values;
-        }
-
-        static double[][] PairCorrelationsMatrix(double[][] matrix)
-        {
-            int n = matrix.Length;
-            int m = matrix[0].Length;
-
-            double[][] pairCorrelationsMatrix = new double[n][];
-            for (int k = 0; k < n; k++)
-                pairCorrelationsMatrix[k] = new double[n];
-
-            var averageValues = AverageValuesForAllCoefficients(matrix);
-            for (int i = 0; i < n; ++i)
-            {
-                for (int j = i; j < n; ++j)
-                {
-                    if (i == j)
-                        pairCorrelationsMatrix[i][j] = 1;
-                    else
-                    {
-                        var xAverage = averageValues[i];
-                        var yAverage = averageValues[j];
-                        var xSquaredDevivationsSum = SumSquaredDeviationsOfQuantity(matrix[i]);
-                        var ySquaredDevivationsSum = SumSquaredDeviationsOfQuantity(matrix[j]);
-
-                        for (int k = 0; k < m; ++k)
-                            pairCorrelationsMatrix[i][j] += Math.Round((matrix[i][k] - xAverage) * (matrix[j][k] - yAverage) / Math.Sqrt(xSquaredDevivationsSum * ySquaredDevivationsSum), 4);
-                        //pairCorrelationsMatrix[j][i] = pairCorrelationsMatrix[i][j];
-                    }
-                }
-            }
-            return pairCorrelationsMatrix;
-        }
-
-        static double[][] Rchast(double[][] R)
-        {
-            int n = R.Length;
-            double[][] I = new double[n][];
-            for (int i = 0; i < n; i++)
-                I[i] = new double[n];
-
-            for (int i = 0; i < n; i++)
-                for (int j = 0; j < n; j++)
-                    I[i][j] = MatrixFunction.AlgebraicComplement(R, i, j) 
-                        / Math.Sqrt(MatrixFunction.AlgebraicComplement(R, i, i) * MatrixFunction.AlgebraicComplement(R, j, j));
-            return I;
-        }
-
-        static double Rmn(double[][] r, int i) 
+        static double SelectiveMultipleCoefficient(double[][] r, int i) 
         {
             return Math.Sqrt(1 - (MatrixFunction.MatrixDeterminant(r) / MatrixFunction.AlgebraicComplement(r, i, i)));
         }
@@ -322,67 +251,67 @@ namespace TVMS
             return laplas;
         }
 
-        private static void Main(string[] args)
+        private static double[][] ReadDataMatrix(string path)
         {
             int n = 3900, m = 10;
 
-            double[][] C1 = new double[n][];
+            double[][] matrix = new double[n][];
             for (int k = 0; k < n; k++)
-                C1[k] = new double[m];
+                matrix[k] = new double[m];
 
-            StreamReader fn = new StreamReader(@"D:\Универ\3 курс\2 семестр\Тер вер и мат стат\movie_metadata_1.csv", Encoding.Default);
+            StreamReader fn = new StreamReader(path, Encoding.Default);
             for (int i = 0; !fn.EndOfStream; i++)
             {
                 string[] s = fn.ReadLine().Split(';');
                 for (int j = 0; j < m; j++)
                     try
                     {
-                        C1[i][j] = double.Parse(s[j]);
+                        matrix[i][j] = double.Parse(s[j]);
                     }
                     catch { }
             }
             fn.Close();
+            return matrix;
+        }
 
-            double[][] C = new double[m][];
-            for (int k = 0; k < m; k++)
-                C[k] = new double[n];
+        private static void Main(string[] args)
+        {
+            int n = 3900, m = 10;
+            var matrix = ReadDataMatrix(@"D:\Универ\3 курс\2 семестр\Тер вер и мат стат\movie_metadata_1.csv");
+            var transpMatrix = MatrixFunction.TransposeMatrix(matrix);
+            Dictionary<double, double> laplasMatrix = ReadLaplasMatrix("2.txt");
 
             for (int i = 0; i < 1; i++)
             {
-                for (int j = 0; j < m; j++)
-                    C[j][i] = C1[i][j];
-
-                Dictionary<double, double> laplasMatrix = ReadLaplasMatrix("2.txt");
-
-                for (int o = 0; o < 1; o++)
+                for (int k = 0; k < m; ++k)
                 {
-                    List<double> a = Iterval(C[i], LengthInterval(C[i], n));
-                    int[] v = N(C[i], a);
-                    double f = S(a, v, Xsr(a, v), n);
-                    double[] NI = ni(a, Xsr(a, v), f, laplasMatrix);
+                    List<double> intervals = BuildItervals(transpMatrix[k], m);
+                    int[] hitsInIntervalsCount = ValueHitsInIntervalsCount(transpMatrix[k], intervals);
+                    double meanSquareDeviation = MeanSquareDeviation(intervals, hitsInIntervalsCount, Xsr(intervals, hitsInIntervalsCount), n);
+                    double[] NI = ni(intervals, Xsr(intervals, hitsInIntervalsCount), meanSquareDeviation, laplasMatrix);
                     Console.WriteLine("{0,20}  {1,20}        {2,15}{3,15}", "     ", "     ", "     Частота", " Вероятность");
                     
-                    for (int j = 0; j < a.Count - 1; j++)
-                        Console.WriteLine("{0,20}   -   {1,20} {2,15}{3,15}", a[j], a[j + 1], v[j], NI[j]);
+                    for (int j = 0; j < intervals.Count - 1; j++)
+                        Console.WriteLine("{0,20}   -   {1,20} {2,15}{3,15}", intervals[j], intervals[j + 1], hitsInIntervalsCount[j], NI[j]);
 
                     Console.WriteLine();
-                    Console.WriteLine("Среднее значение x: " + Xsr(a, v));
-                    Console.WriteLine("Среднее квадратичное отклонение: " + S(a, v, Xsr(a, v), n));
-                    Console.WriteLine("Критерий Пирсона: " + Pirs(v, NI, n));
+                    Console.WriteLine("Среднее значение x: " + Xsr(intervals, hitsInIntervalsCount));
+                    Console.WriteLine("Среднее квадратичное отклонение: " + MeanSquareDeviation(intervals, hitsInIntervalsCount, Xsr(intervals, hitsInIntervalsCount), n));
+                    Console.WriteLine("Критерий Пирсона: " + PearsonChiSquaredTest(hitsInIntervalsCount, NI, intervals.Count - 1));
                     Console.WriteLine("Табличный критерий Пирсона = " + 20.519);
-                    Console.WriteLine("Критерий Колмогорова = " + (6 * Math.Sqrt(n) * Kolmogorov(C[i], n) + 1) / (6 * Math.Sqrt(n)));
+                    Console.WriteLine("Критерий Колмогорова = " + (6 * Math.Sqrt(n) * KolmogorovTest(transpMatrix[i], n) + 1) / (6 * Math.Sqrt(n)));
                     Console.WriteLine("Табличный критерий Колмогорова = 1,950");
                     Console.WriteLine();
                     Console.WriteLine();
                 }
 
-                double[][] r = PairCorrelationsMatrix(C);
+                double[][] r = PairCorrelationsMatrix.GetForMatrix(MatrixFunction.TransposeMatrix(matrix));
                 StreamWriter fss = new StreamWriter("result.txt");
                 Console.WriteLine("Матрица корреляции");
                 for (int u = 0; u < r.Length; u++)
                 {
                     for (int j = 0; j < r.Length; j++)
-                        Console.Write("{0,6}  ", r[u][j]);
+                        Console.Write("{0}         ", Math.Round(r[u][j], 5));
                     Console.WriteLine();
                 }
 
@@ -402,11 +331,11 @@ namespace TVMS
 
                 Console.WriteLine("Коэффициенты значимости:");
                 for (int u = 0; u < r.Length; u++)
-                    Console.WriteLine((Math.Pow(Rmn(r, u), 2)) / ((1 - Math.Pow(Rmn(r, u), 2)) / (n - 2)));
+                    Console.WriteLine((Math.Pow(SelectiveMultipleCoefficient(r, u), 2)) / ((1 - Math.Pow(SelectiveMultipleCoefficient(r, u), 2)) / (n - 2)));
                 Console.WriteLine();
 
-                double Rmn1 = Rmn(r, 1);
-                double D = Math.Pow(Rmn(r, 1), 2);
+                double Rmn1 = SelectiveMultipleCoefficient(r, 1);
+                double D = Math.Pow(SelectiveMultipleCoefficient(r, 1), 2);
                 Console.WriteLine("Выборочный множественный коэффициент Y: " + Rmn1);
                 Console.WriteLine("Коэффициент детерминации: " + D);
                 if (D > 0.8)
@@ -414,7 +343,7 @@ namespace TVMS
 
                 Console.WriteLine();
                 Console.WriteLine("Матрица частной корреляции");
-                double[][] r1 = Rchast(r);
+                double[][] r1 = PartialCorrelationsMatrix.GetForMatrix(r);
                 for (int u = 0; u < r1.Length; u++)
                 {
                     for (int j = 0; j < r1.Length; j++)
@@ -428,15 +357,15 @@ namespace TVMS
                 fss.Close();
                 Console.WriteLine();
 
-                double[] result = Regr(C1);
+                double[] result = Regr(matrix);
                 Console.WriteLine();
                 Console.WriteLine("Коэффициенты эластичности");
-                double[] elast = ElasticityCoefficient(C, result);
+                double[] elast = ElasticityCoefficient(transpMatrix, result);
                 for (int u = 0; u < m; u++)
                     Console.WriteLine("x{0} = {1}", (u + 1), elast[u]);
 
                 double[] X0 = { 1, 0.92, 0.83, 5.82, 1.2, 4.25, 1.01, 1.01, 1 };
-                double[] resultat = Prognoz(C1, X0);
+                double[] resultat = Prognoz(matrix, X0);
                 Console.WriteLine("Прогнозирование");
                 Console.WriteLine(resultat[0] + " < y < " + resultat[1]);
                 Console.WriteLine();
