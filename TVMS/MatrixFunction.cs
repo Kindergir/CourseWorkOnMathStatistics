@@ -111,7 +111,7 @@ namespace TVMS
 
         public static double[] MatrixVectorMultiplication(double[][] matrix, double[] vector)
         {
-            if (matrix.Length != 0 && (vector.Length != matrix[0].Length))
+            if (matrix.Length != 0 && vector.Length != matrix[0].Length)
                 throw new ArgumentException("Matrices can not be multiplied");
 
             double[] product = new double[vector.Length];

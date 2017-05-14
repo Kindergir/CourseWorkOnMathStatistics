@@ -9,65 +9,59 @@ namespace TVMS
 {
     class Program
     {
-        static double SelectiveMultipleCoefficient(double[][] r, int i) 
+        public static double[] Regr(double[][] dataMatrix)
         {
-            return Math.Sqrt(1 - (MatrixFunction.MatrixDeterminant(r) / MatrixFunction.AlgebraicComplement(r, i, i)));
-        }
-
-        public static double[] Regr(double[][] A)
-        {
-            int n = A.Length, m = A[0].Length;
-            double[] result = new double[m];
-            double[] Y = new double[n];
+            int n = dataMatrix.Length, parametersCount = dataMatrix[0].Length;
+            double[] regressionCoefficients = new double[parametersCount];
+            double[] resultParameter = new double[n];
             double[][] A1 = new double[n][];
 
             for (int i = 0; i < n; i++)
             {
-                A1[i] = new double[m];
-                Y[i] = A[i][0];
+                A1[i] = new double[parametersCount];
+                resultParameter[i] = dataMatrix[i][parametersCount - 1];
             }
 
             for (int i = 0; i < n; i++)
-                A1[i][0] = 1;
+                A1[i][parametersCount - 1] = 1;
 
             for (int i = 0; i < n; i++)
-                for (int j = 1; j < m; j++)
-                    A1[i][j] = A[i][j];
+                for (int j = 0; j < parametersCount - 1; j++)
+                    A1[i][j] = dataMatrix[i][j];
 
-            result = MatrixFunction.MatrixVectorMultiplication(MatrixFunction.MultiplicateMatrix(MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(A1), A1)), MatrixFunction.TransposeMatrix(A1)), Y);
+            regressionCoefficients = MatrixFunction.MatrixVectorMultiplication(MatrixFunction.MultiplicateMatrix(MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(A1), A1)), MatrixFunction.TransposeMatrix(A1)), resultParameter);
 
-            double Qr = MatrixFunction.SumOfVectorCoordinatesSquares(MatrixFunction.MatrixVectorMultiplication(A1, result));
-            double Qost = MatrixFunction.SumOfVectorCoordinatesSquares(MatrixFunction.VectorsDifference(Y, MatrixFunction.MatrixVectorMultiplication(A1, result)));
+            double Qr = MatrixFunction.SumOfVectorCoordinatesSquares(MatrixFunction.MatrixVectorMultiplication(MatrixFunction.TransposeMatrix(A1), regressionCoefficients));
+            double Qost = MatrixFunction.SumOfVectorCoordinatesSquares(MatrixFunction.VectorsDifference(resultParameter, MatrixFunction.MatrixVectorMultiplication(MatrixFunction.TransposeMatrix(A1), regressionCoefficients)));
 
-            double s = Qost / (n - m - 1);
-            double[] sb = new double[result.Length];
-            var temperory = (MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(A1), A1)));
+            double s = Qost / (n - parametersCount - 1);
+            double[] sb = new double[parametersCount];
+            var temperory = MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(A1), A1));
 
-            for (int j = 0; j < m; j++)
+            for (int j = 0; j < parametersCount; j++)
                 sb[j] = s * temperory[j][j];
 
             double t = 4.587;
             Console.WriteLine("Коэффициенты регрессии:");
-
-            for (int i = 0; i < result.Length; i++)
+            for (int i = 0; i < regressionCoefficients.Length; i++)
             {
                 if (i == 0)
-                    Console.WriteLine("a = {0}", result[i]);
+                    Console.WriteLine("a = {0}", regressionCoefficients[i]);
                 else
-                    Console.WriteLine("b{0} = {1}", i, result[i]);
+                    Console.WriteLine("b{0} = {1}", i, regressionCoefficients[i]);
             }
 
             Console.WriteLine("Значимость коэффициентов регрессии:");
-            for (int i = 0; i < m; i++)
-                Console.WriteLine("b{0} = {1}", (i + 1), result[i] / sb[i]);
+            for (int i = 0; i < parametersCount; i++)
+                Console.WriteLine("b{0} = {1}", (i + 1), regressionCoefficients[i] / sb[i]);
 
             Console.WriteLine("Доверительные интервалы коэффициентов регрессии:");
-            for (int i = 0; i < m; i++)
-                Console.WriteLine("{0} <= b{1} <= {2}", (result[i] - t * sb[i]), (i + 1), (result[i] + t * sb[i]));
+            for (int i = 0; i < parametersCount; i++)
+                Console.WriteLine("{0} <= b{1} <= {2}", (regressionCoefficients[i] - t * sb[i]), (i + 1), (regressionCoefficients[i] + t * sb[i]));
 
             Console.WriteLine("Коэффициент значимости уравнения регрессии:");
-            Console.WriteLine(Qr * (n - m - 1) / (Qost * (m + 1)));
-            return result;
+            Console.WriteLine(Qr * (n - parametersCount - 1) / (Qost * (parametersCount + 1)));
+            return regressionCoefficients;
         }
 
         public static double[] ElasticityCoefficient(double[][] A, double[] b)
@@ -179,43 +173,42 @@ namespace TVMS
                 Console.WriteLine();
             }
 
-            PairCorrelationsMatrix pcm = new PairCorrelationsMatrix(transpMatrix);
+            CorrelationsAnalysis correlationsAnalyses = new CorrelationsAnalysis(transpMatrix, m - 1);
             Console.WriteLine("Матрица корреляции");
-            for (int u = 0; u < pcm.CorrelationsMatrix.Length; u++)
+            for (int u = 0; u < correlationsAnalyses.PairCorrelationsMatrix.Length; u++)
             {
-                for (int j = 0; j < pcm.CorrelationsMatrix[u].Length; j++)
-                    Console.Write("{0}         ", Math.Round(pcm.CorrelationsMatrix[u][j], 5));
+                for (int j = 0; j < correlationsAnalyses.PairCorrelationsMatrix[u].Length; j++)
+                    Console.Write("{0}         ", Math.Round(correlationsAnalyses.PairCorrelationsMatrix[u][j], 5));
                 Console.WriteLine();
             }
 
             Console.WriteLine(); Console.WriteLine("Коэффициенты значимости для матрицы парных корреляций: ");
-            for (int u = 0; u < pcm.SignificanceFactorsMatrix.Length; u++)
+            for (int u = 0; u < correlationsAnalyses.MatrixSignificanceFactors.Length; u++)
             {
-                for (int j = 0; j < pcm.SignificanceFactorsMatrix[u].Length; j++)
-                    Console.Write("{0}         ", Math.Round(pcm.SignificanceFactorsMatrix[u][j], 5));
+                for (int j = 0; j < correlationsAnalyses.MatrixSignificanceFactors[u].Length; j++)
+                    Console.Write("{0}         ", Math.Round(correlationsAnalyses.MatrixSignificanceFactors[u][j], 5));
                 Console.WriteLine();
             }
             Console.WriteLine();
 
             Console.WriteLine("Коэффициенты значимости:");
-            for (int u = 0; u < pcm.CorrelationsMatrix.Length; u++)
-                Console.WriteLine((Math.Pow(SelectiveMultipleCoefficient(pcm.CorrelationsMatrix, u), 2)) / ((1 - Math.Pow(SelectiveMultipleCoefficient(pcm.CorrelationsMatrix, u), 2)) / (n - 2)));
+            for (int u = 0; u < correlationsAnalyses.ParametersSignificanceFactors.Length; u++)
+                Console.WriteLine(correlationsAnalyses.ParametersSignificanceFactors[u]);
             Console.WriteLine();
 
-            double Rmn1 = SelectiveMultipleCoefficient(pcm.CorrelationsMatrix, 1);
-            double D = Math.Pow(SelectiveMultipleCoefficient(pcm.CorrelationsMatrix, 1), 2);
-            Console.WriteLine("Выборочный множественный коэффициент Y: " + Rmn1);
-            Console.WriteLine("Коэффициент детерминации: " + D);
-            if (D > 0.8)
+            var multipleCoefficientY = correlationsAnalyses.SelectiveMultipleCoefficient;
+            var determinationCoefficientY = correlationsAnalyses.DeterminationCoefficient;
+            Console.WriteLine("Выборочный множественный коэффициент Y: " + multipleCoefficientY);
+            Console.WriteLine("Коэффициент детерминации: " + determinationCoefficientY);
+            if (determinationCoefficientY > 0.8)
                 Console.WriteLine("Модель адекватна");
 
             Console.WriteLine();
             Console.WriteLine("Матрица частной корреляции");
-            double[][] r1 = PartialCorrelationsMatrix.GetForMatrix(pcm.CorrelationsMatrix);
-            for (int u = 0; u < r1.Length; u++)
+            for (int u = 0; u < correlationsAnalyses.PartialCorrelationsMatrix.Length; u++)
             {
-                for (int j = 0; j < r1.Length; j++)
-                    Console.Write("{0,6}  ", Math.Round(r1[u][j], 4));
+                for (int j = 0; j < correlationsAnalyses.PartialCorrelationsMatrix.Length; j++)
+                    Console.Write("{0,6}  ", Math.Round(correlationsAnalyses.PartialCorrelationsMatrix[u][j], 4));
                 Console.WriteLine();
             }
             Console.WriteLine();

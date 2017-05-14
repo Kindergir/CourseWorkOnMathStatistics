@@ -45,11 +45,11 @@
   <ItemGroup>
     <Compile Include="KolmogorovConsentCriterion.cs" />
     <Compile Include="PearsonConsentCriterion.cs" />
-    <Compile Include="PairCorrelationsMatrix.cs" />
+    <Compile Include="CorrelationsAnalysis.cs" />
     <Compile Include="MatrixFunction.cs" />
-    <Compile Include="PartialCorrelationsMatrix.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RegressionAnalysis.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
