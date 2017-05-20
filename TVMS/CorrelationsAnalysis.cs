@@ -27,11 +27,11 @@ namespace TVMS
 
         private void CalcPairCorrelationsMatrix()
         {
-            var averageValues = AverageValuesForAllCoefficients(dataMatrix);
-            var squaredDevivations = SumSquaredDevivatiosForAllCofficients(dataMatrix);
-            var devivations = SumDevivatiosForAllCofficients(dataMatrix);
+            var squaredDevivations = CalcSquaredDevivatiosForAllCofficients(dataMatrix);
+            var devivations = CalcSumDevivatiosForAllCofficients(dataMatrix);
 
             int coefCount = dataMatrix.Length;
+            int measurementsCount = dataMatrix[0].Length;
             PairCorrelationsMatrix = new double[coefCount][];
             for (int k = 0; k < coefCount; k++)
                 PairCorrelationsMatrix[k] = new double[coefCount];
@@ -44,15 +44,14 @@ namespace TVMS
                         PairCorrelationsMatrix[i][j] = 1;
                     else
                     {
-                        var xAverage = averageValues[i];
-                        var yAverage = averageValues[j];
                         var xDevivationsSum = devivations[i];
                         var yDevivationsSum = devivations[j];
-                        var xSquaredDevivationsSum = squaredDevivations[i];
-                        var ySquaredDevivationsSum = squaredDevivations[j];
+                        var xSquaredDevivation = squaredDevivations[i];
+                        var ySquaredDevivation = squaredDevivations[j];
 
-                        PairCorrelationsMatrix[i][j] = (xDevivationsSum - xAverage) * (yDevivationsSum - yAverage)
-                                / Math.Sqrt(xSquaredDevivationsSum * ySquaredDevivationsSum);
+                        PairCorrelationsMatrix[i][j] = xDevivationsSum * yDevivationsSum
+                                / xSquaredDevivation * ySquaredDevivation * measurementsCount;
+                        PairCorrelationsMatrix[j][i] = PairCorrelationsMatrix[i][j];
                     }
                 }
             }
@@ -107,17 +106,16 @@ namespace TVMS
             int parametersCount = PairCorrelationsMatrix.Length;
             ParametersSignificanceFactors = new double[parametersCount];
             for (int i = 0; i < parametersCount; ++i)
-                ParametersSignificanceFactors[i] = Math.Pow(SelectiveMultipleCoefficient, 2)
-                    / ((1 - Math.Pow(SelectiveMultipleCoefficient, 2)) / (parametersCount - 2));
+                ParametersSignificanceFactors[i] = DeterminationCoefficient * Math.Sqrt(parametersCount - 2)
+                    / 1 - DeterminationCoefficient;
         }
 
-        private double SumSquaredDeviationsOfQuantity(double[] values)
+        private double[] CalcSumDevivatiosForAllCofficients(double[][] matrix)
         {
-            double x = 0;
-            var averageValue = values.Average();
-            for (int i = 0; i < values.Length; ++i)
-                x += Math.Pow(values[i] - averageValue, 2);
-            return x;
+            double[] devivations = new double[matrix.Length];
+            for (int i = 0; i < matrix.Length; ++i)
+                devivations[i] = SumDeviationsOfQuantity(matrix[i]);
+            return devivations;
         }
 
         private double SumDeviationsOfQuantity(double[] values)
@@ -129,28 +127,21 @@ namespace TVMS
             return x;
         }
 
-        private double[] AverageValuesForAllCoefficients(double[][] matrix)
-        {
-            double[] values = new double[matrix.Length];
-            for (int i = 0; i < matrix.Length; ++i)
-                values[i] = matrix[i].Average();
-            return values;
-        }
-
-        private double[] SumDevivatiosForAllCofficients(double[][] matrix)
+        private double[] CalcSquaredDevivatiosForAllCofficients(double[][] matrix)
         {
             double[] devivations = new double[matrix.Length];
             for (int i = 0; i < matrix.Length; ++i)
-                devivations[i] = SumDeviationsOfQuantity(matrix[i]);
+                devivations[i] = CalcQuantitySquaredDeviation(matrix[i]);
             return devivations;
         }
 
-        private double[] SumSquaredDevivatiosForAllCofficients(double[][] matrix)
+        private double CalcQuantitySquaredDeviation(double[] values)
         {
-            double[] devivations = new double[matrix.Length];
-            for (int i = 0; i < matrix.Length; ++i)
-                devivations[i] = SumSquaredDeviationsOfQuantity(matrix[i]);
-            return devivations;
+            double x = 0;
+            var averageValue = values.Average();
+            for (int i = 0; i < values.Length; ++i)
+                x += Math.Pow(values[i] - averageValue, 2);
+            return Math.Sqrt(1.0 / values.Length * x);
         }
     }
 }

@@ -16,41 +16,37 @@ namespace TVMS
 
         private readonly double[][] dataMatrix;
 
-        public RegressionAnalysis(double[][] dataMatrix)
+        public RegressionAnalysis(double[][] dataMatrix, int resultParameterNumber)
         {
             this.dataMatrix = dataMatrix;
-            Regr();
+            Regr(resultParameterNumber);
             CalcElasticityCoefficients();
         }
 
-        private void Regr()
+        private void Regr(int resultParameterNumber)
         {
+            var transpMatrix = MatrixFunction.TransposeMatrix(dataMatrix);
             int n = dataMatrix.Length, parametersCount = dataMatrix[0].Length;
-            RegressionCoefficients = new double[parametersCount];
-            double[] resultParameter = new double[n];
-            double[][] A1 = new double[n][];
+
+            double[] resultParameter = transpMatrix[resultParameterNumber];
+            double[][] withoutResultParameter = new double[n][];
 
             for (int i = 0; i < n; i++)
             {
-                A1[i] = new double[parametersCount];
-                resultParameter[i] = dataMatrix[i][parametersCount - 1];
+                withoutResultParameter[i] = new double[parametersCount];
+                withoutResultParameter[i][parametersCount - 1] = 1;
+                for (int j = 0; j < parametersCount - 1; j++)
+                    withoutResultParameter[i][j] = dataMatrix[i][j];
             }
 
-            for (int i = 0; i < n; i++)
-                A1[i][parametersCount - 1] = 1;
+            RegressionCoefficients = MatrixFunction.MatrixVectorMultiplication(MatrixFunction.MultiplicateMatrix(MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(withoutResultParameter), withoutResultParameter)), MatrixFunction.TransposeMatrix(withoutResultParameter)), resultParameter);
 
-            for (int i = 0; i < n; i++)
-                for (int j = 0; j < parametersCount - 1; j++)
-                    A1[i][j] = dataMatrix[i][j];
-
-            RegressionCoefficients = MatrixFunction.MatrixVectorMultiplication(MatrixFunction.MultiplicateMatrix(MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(A1), A1)), MatrixFunction.TransposeMatrix(A1)), resultParameter);
-
-            double Qr = MatrixFunction.SumOfVectorCoordinatesSquares(MatrixFunction.MatrixVectorMultiplication(MatrixFunction.TransposeMatrix(A1), RegressionCoefficients));
-            double Qost = MatrixFunction.SumOfVectorCoordinatesSquares(MatrixFunction.VectorsDifference(resultParameter, MatrixFunction.MatrixVectorMultiplication(MatrixFunction.TransposeMatrix(A1), RegressionCoefficients)));
+            double Qr = MatrixFunction.SumOfVectorCoordinatesSquares(MatrixFunction.MatrixVectorMultiplication(MatrixFunction.TransposeMatrix(withoutResultParameter), RegressionCoefficients));
+            double Qost = MatrixFunction.SumOfVectorCoordinatesSquares(MatrixFunction.VectorsDifference(resultParameter, MatrixFunction.MatrixVectorMultiplication(MatrixFunction.TransposeMatrix(withoutResultParameter), RegressionCoefficients)));
 
             double s = Qost / (n - parametersCount - 1);
             double[] sb = new double[parametersCount];
-            var temperory = MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(A1), A1));
+            var temperory = MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(withoutResultParameter), withoutResultParameter));
 
             for (int j = 0; j < parametersCount; j++)
                 sb[j] = s * temperory[j][j];

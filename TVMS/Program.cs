@@ -117,7 +117,7 @@ namespace TVMS
             }
             Console.WriteLine();
 
-            RegressionAnalysis  ra = new RegressionAnalysis(matrix);
+            RegressionAnalysis ra = new RegressionAnalysis(matrix, m - 1);
             //Console.WriteLine("Коэффициенты регрессии:");
             //for (int i = 0; i < ra.RegressionCoefficients.Length; i++)
             //{
