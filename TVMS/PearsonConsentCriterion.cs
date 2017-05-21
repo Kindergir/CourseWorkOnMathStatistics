@@ -6,130 +6,161 @@ namespace TVMS
 {
     public class PearsonConsentCriterion
     {
-        public double PearsonCriterionValue { get; }
-        public double AverageValueX { get; }
-        public double[] Intervals { get; }
-        public int[] HitsInIntervalsCount { get; }
-        public double[] HitsInIntervalsProbability { get; }
-        public double MeanSquareDeviation { get; }
+        public double PearsonCriterionValue { get; private set; }
+        public double AverageValueX { get; private set; }
+        public double[] Intervals { get; private set; }
+        public int[] HitsInIntervalsCount { get; private set; }
+        public double[] HitsInIntervalsProbability { get; private set; }
+        public double MeanSquareDeviation { get; private set; }
+
+        private Dictionary<double, double> laplasMatrix;
 
         public PearsonConsentCriterion(double[] parameterValues, Dictionary<double, double> laplasMatrix)
         {
             this.laplasMatrix = laplasMatrix;
-            int parametersCount = parameterValues.Length;
-            Intervals = BuildItervals(parameterValues, parametersCount).ToArray();
-            HitsInIntervalsCount = CalcHitsInIntervalsCount(parameterValues, Intervals);
-            AverageValueX = CalcAverageX(Intervals.ToList(), HitsInIntervalsCount);
-            MeanSquareDeviation = CalcMeanSquareDeviation(Intervals, HitsInIntervalsCount, AverageValueX, parameterValues.Length);
-            HitsInIntervalsProbability = CalcProbabilityHitsInInterval(Intervals, AverageValueX, MeanSquareDeviation, laplasMatrix);
-            PearsonCriterionValue = PearsonTestForOneParameter(HitsInIntervalsCount, HitsInIntervalsProbability, Intervals.Length);
+            BuildItervals(parameterValues);
+            CalcHitsInIntervalsCount(parameterValues);
+            CalcAverageX();
+            CalcMeanSquareDeviation(parameterValues.Length);
+            CalcProbabilityHitsInInterval();
+            PearsonTestForOneParameter(parameterValues.Length);
         }
 
-        private Dictionary<double, double> laplasMatrix;
-
-        private double PearsonTestForOneParameter(int[] hitsCount, double[] hitsProbability, int intervalsCount)
+        private void PearsonTestForOneParameter(int measureCount)
         {
             double sum = 0;
-            for (int i = 0; i < hitsCount.Length; ++i)
-                sum += Math.Pow(hitsCount[i] - intervalsCount * hitsProbability[i], 2.0)
-                    / (intervalsCount * hitsProbability[i]);
-            return sum;
+            for (int i = 0; i < HitsInIntervalsCount.Length; ++i)
+                if (HitsInIntervalsProbability[i] != 0)
+                    sum += Math.Pow(HitsInIntervalsCount[i] - measureCount * HitsInIntervalsProbability[i], 2.0)
+                        / (measureCount * HitsInIntervalsProbability[i]);
+            PearsonCriterionValue = sum;
         }
 
-        private List<double> BuildItervals(double[] d, int varCount)
+        private void BuildItervals(double[] parameterValues)
         {
-            var length = SpotLengthInterval(d, varCount);
+            var length = SpotLengthInterval(parameterValues);
             List<double> a = new List<double>();
-            double a0 = d.Min() - length / 2;
+            double a0 = parameterValues.Min() - length / 2;
             double bound = a0 + length;
-            a.Add(d.Min() - length / 2);
+            a.Add(parameterValues.Min() - length / 2);
             a.Add(bound);
-            while (bound <= d.Max())
+            while (bound <= parameterValues.Max())
             {
                 bound += length;
                 a.Add(bound);
             }
-            return a;
+            Intervals = a.ToArray();
         }
 
-        private double SpotLengthInterval(double[] d, int n)
+        private double SpotLengthInterval(double[] parameterValues)
         {
-            return (d.Max() - d.Min()) / (1 + 3.321 * Math.Log10(n));
+            return (parameterValues.Max() - parameterValues.Min()) / (1 + 3.321 * Math.Log10(parameterValues.Length));
         }
 
-        private double CalcAverageX(List<double> a, int[] n)
+        private void CalcAverageX()
         {
-            double[] x = new double[a.Count - 1];
-            for (int j = 0; j < a.Count - 1; ++j)
-                x[j] = (a[j] + a[j + 1]) / 2;
+            double[] midpoints = new double[Intervals.Length - 1];
+            for (int j = 0; j < Intervals.Length - 1; ++j)
+                midpoints[j] = (Intervals[j] + Intervals[j + 1]) / 2;
 
-            double X = 0, F = 0;
-            for (int i = 0; i < n.Length; ++i)
+            double meanValuesSum = 0, F = 0;
+            for (int i = 0; i < HitsInIntervalsCount.Length; ++i)
             {
-                X += x[i] * n[i];
-                F += n[i];
+                meanValuesSum += midpoints[i] * HitsInIntervalsCount[i];
+                F += HitsInIntervalsCount[i];
             }
-            return X / F;
+            AverageValueX = meanValuesSum / F;
         }
 
-        private double CalcMeanSquareDeviation(double[] a, int[] n, double x, int m)
+        private void CalcMeanSquareDeviation(int measureCount)
         {
             double s = 0;
-            double[] X = new double[a.Length - 1];
-            for (int j = 0; j < a.Length - 1; j++)
-            {
-                X[j] = (a[j] + a[j + 1]) / 2;
-            }
+            double[] midpoints = new double[Intervals.Length - 1];
+            for (int j = 0; j < Intervals.Length - 1; j++)
+                midpoints[j] = (Intervals[j] + Intervals[j + 1]) / 2;
 
-            for (int i = 0; i < n.Length; i++)
-            {
-                s += Math.Pow(X[i] - x, 2) * n[i];
-            }
-
-            return Math.Sqrt(s / m);
+            for (int i = 0; i < HitsInIntervalsCount.Length; i++)
+                s += Math.Pow(midpoints[i] - AverageValueX, 2) * HitsInIntervalsCount[i];
+            MeanSquareDeviation = Math.Sqrt(s / measureCount);
         }
 
-        private int[] CalcHitsInIntervalsCount(double[] values, double[] intervals)
+        private void CalcHitsInIntervalsCount(double[] values)
         {
-            int[] n = new int[intervals.Length - 1];
+            List<int> hits = new List<int>();
+            List<double> intervals = new List<double>();
+            intervals.Add(Intervals[0]);
 
-            for (int i = 0; i < intervals.Length - 1; ++i)
-                for (int j = 0; j < values.Length; ++j)
-                    if (values[j] > intervals[i] && values[j] <= intervals[i + 1])
-                        n[i]++;
-            return n;
+            int add = 0;
+            for (int i = 0; i < Intervals.Length - 1; ++i)
+            {
+                var cnt = values.Count(x => x > Intervals[i] && x <= Intervals[i + 1]);
+                if (cnt != 0)
+                {
+                    if (cnt >= 5)
+                    {
+                        hits.Add(cnt + add);
+                        intervals.Add(Intervals[i + 1]);
+                        add = 0;
+                    }
+                    else
+                        add = cnt;
+                }
+            }
+            if (add == 0)
+            {
+                HitsInIntervalsCount = hits.ToArray();
+                if (intervals[intervals.Count - 1] != Intervals[Intervals.Length - 1])
+                    intervals.Add(Intervals[Intervals.Length - 1]);
+            }
+            else
+            {
+                HitsInIntervalsCount = hits.ToArray();
+                intervals[intervals.Count - 1] = Intervals[Intervals.Length - 1];
+            }
+            Intervals = intervals.ToArray();
         }
 
-        private double[] CalcProbabilityHitsInInterval(double[] a, double X, double s, Dictionary<double, double> L)
+        private void CalcProbabilityHitsInInterval()
         {
-            double[] Ni = new double[a.Length - 1];
+            HitsInIntervalsProbability = new double[Intervals.Length - 1];
             double t1, t2;
-            for (int i = 0; i < a.Length - 1; i++)
+            for (int i = 0; i < Intervals.Length - 1; i++)
             {
-                t1 = (a[i + 1] - X) / s;
-                t2 = (a[i] - X) / s;
+                t1 = Intervals[i + 1] - AverageValueX/MeanSquareDeviation;
+                t2 = Intervals[i] - AverageValueX/MeanSquareDeviation;
+
                 if (t1 < 0)
                 {
-                    L.TryGetValue(Math.Round(-t1, 2), out t1);
-                    t1 *= -1;
+                    if (laplasMatrix.ContainsKey(Math.Round(-1 * t1, 2)))
+                        t1 *= laplasMatrix[Math.Round(-1 * t1, 2)] * -1;
+                    else
+                        t1 *= -0.5;
                 }
                 else
                 {
-                    L.TryGetValue(Math.Round(t1, 2), out t1);
+                    if (laplasMatrix.ContainsKey(Math.Round(t1, 2)))
+                        t1 *= laplasMatrix[Math.Round(t1, 2)];
+                    else
+                        t1 *= 0.5;
                 }
 
                 if (t2 < 0)
                 {
-                    L.TryGetValue(Math.Round(-t2, 2), out t2);
-                    t2 *= -1;
+                    if (laplasMatrix.ContainsKey(Math.Round(-1 * t2, 2)))
+                        t2 *= laplasMatrix[Math.Round(-1 * t2, 2)] * -1;
+                    else
+                        t2 *= -0.5;
                 }
                 else
                 {
-                    L.TryGetValue(Math.Round(t2, 2), out t2);
+                    if (laplasMatrix.ContainsKey(Math.Round(t2, 2)))
+                        t2 *= laplasMatrix[Math.Round(t2, 2)];
+                    else
+                        t2 *= 0.5;
                 }
-                Ni[i] = t1 - t2;
+
+                HitsInIntervalsProbability[i] = Math.Abs(t1 - t2);
             }
-            return Ni;
         }
     }
 }

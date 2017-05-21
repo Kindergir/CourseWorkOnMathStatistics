@@ -49,55 +49,77 @@ namespace TVMS
             return matrix;
         }
 
+        private static void WriteMatrix(string path, double[][] matrix)
+        {
+            StreamWriter sw = new StreamWriter(path);
+            for (int i = 0; i < matrix.Length; ++i)
+            {
+                string cur = "";
+                for (int j = 0; j < matrix[i].Length; ++j)
+                {
+                    cur += matrix[i][j] + ";";
+                }
+                if (cur[cur.Length - 1] == ';')
+                    cur = cur.Substring(0, cur.Length - 1);
+                cur += "\n";
+                sw.Write(cur);
+            }
+        }
+
         private static void Main(string[] args)
         {
-            int n = 3900, m = 10;
+            int n = 629, m = 10;
             var matrix = ReadDataMatrix(@"D:\Универ\3 курс\2 семестр\Тер вер и мат стат\movie_metadata_1.csv");
             var transpMatrix = MatrixFunction.TransposeMatrix(matrix);
             Dictionary<double, double> laplasMatrix = ReadLaplasMatrix("2.txt");
 
             for (int k = 0; k < m; ++k)
             {
-                PearsonConsentCriterion pcc = new PearsonConsentCriterion(transpMatrix[k], laplasMatrix);
+                PearsonConsentCriterion pcc = new PearsonConsentCriterion(transpMatrix[k].Take(n).ToArray(), laplasMatrix);
                 KolmogorovConsentCriterion kcc = new KolmogorovConsentCriterion(transpMatrix[k]);
-
-                Console.WriteLine("{0,20}  {1,20}        {2,15}{3,15}", "     ", "     ", "     Частота", " Вероятность");
-                for (int j = 0; j < pcc.Intervals.Length - 1; ++j)
-                    Console.WriteLine("{0,20}   -   {1,20} {2,15}{3,15}", 
-                        pcc.Intervals[j], pcc.Intervals[j + 1], pcc.HitsInIntervalsCount[j], pcc.HitsInIntervalsProbability[j]);
+                DescriptiveStatistics ds = new DescriptiveStatistics(transpMatrix[k]);
 
                 Console.WriteLine();
+                Console.WriteLine("Среднее арифметическое = {0}", ds.ArithmeticalMean);
+                Console.WriteLine("Мода = {0}", ds.Mode);
+                Console.WriteLine("Медиана = {0}", ds.Median);
+                Console.WriteLine("Дисперсия = {0}", ds.Dispersion);
+                Console.WriteLine("Асимметрия = {0}", ds.Assimmetry);
+                Console.WriteLine("Эксцесс = {0}", ds.Excess);
+                Console.WriteLine("Стандартное отклонение = {0}", ds.StandardDeviation);
+                Console.WriteLine("Коэффициент вариации = {0}", ds.VariationCoefficient);
+                Console.WriteLine("Размах вариации = {0}", ds.VariationRange);
                 Console.WriteLine("Среднее значение x: " + pcc.AverageValueX);
                 Console.WriteLine("Среднее квадратичное отклонение: " + pcc.MeanSquareDeviation);
                 Console.WriteLine("Критерий Пирсона: " + pcc.PearsonCriterionValue);
-                Console.WriteLine("Табличный критерий Пирсона = " + 20.519);
+                Console.WriteLine("Табличный критерий Пирсона = " + 63.6567);
                 Console.WriteLine("Критерий Колмогорова = " + kcc.KolmogorovCriterionValue);
-                Console.WriteLine("Табличный критерий Колмогорова = 1,950");
-                Console.WriteLine();
+                Console.WriteLine("Табличный критерий Колмогорова = 1,950\n\n");
                 Console.WriteLine();
             }
 
             CorrelationsAnalysis correlationsAnalyses = new CorrelationsAnalysis(transpMatrix, m - 1);
+            //WriteMatrix(@"D:\Универ\3 курс\2 семестр\Тер вер и мат стат\PairCorrelationMatrix.csv", correlationsAnalyses.PairCorrelationsMatrix);
             Console.WriteLine("Матрица корреляции");
-            for (int u = 0; u < correlationsAnalyses.PairCorrelationsMatrix.Length; u++)
+            foreach (double[] correlationCoef in correlationsAnalyses.PairCorrelationsMatrix)
             {
-                for (int j = 0; j < correlationsAnalyses.PairCorrelationsMatrix[u].Length; j++)
-                    Console.Write("{0}         ", Math.Round(correlationsAnalyses.PairCorrelationsMatrix[u][j], 5));
+                for (int j = 0; j < correlationCoef.Length; j++)
+                    Console.Write("{0}    ", Math.Round(correlationCoef[j], 5));
                 Console.WriteLine();
             }
 
             Console.WriteLine(); Console.WriteLine("Коэффициенты значимости для матрицы парных корреляций: ");
-            for (int u = 0; u < correlationsAnalyses.MatrixSignificanceFactors.Length; u++)
+            foreach (double[] t in correlationsAnalyses.MatrixSignificanceFactors)
             {
-                for (int j = 0; j < correlationsAnalyses.MatrixSignificanceFactors[u].Length; j++)
-                    Console.Write("{0}         ", Math.Round(correlationsAnalyses.MatrixSignificanceFactors[u][j], 5));
+                for (int j = 0; j < t.Length; j++)
+                    Console.Write("{0}         ", Math.Round(t[j], 5));
                 Console.WriteLine();
             }
             Console.WriteLine();
 
             Console.WriteLine("Коэффициенты значимости:");
-            for (int u = 0; u < correlationsAnalyses.ParametersSignificanceFactors.Length; u++)
-                Console.WriteLine(correlationsAnalyses.ParametersSignificanceFactors[u]);
+            foreach (double t in correlationsAnalyses.ParametersSignificanceFactors)
+                Console.WriteLine(t);
             Console.WriteLine();
 
             var multipleCoefficientY = correlationsAnalyses.SelectiveMultipleCoefficient;
@@ -109,10 +131,10 @@ namespace TVMS
 
             Console.WriteLine();
             Console.WriteLine("Матрица частной корреляции");
-            for (int u = 0; u < correlationsAnalyses.PartialCorrelationsMatrix.Length; u++)
+            foreach (double[] t in correlationsAnalyses.PartialCorrelationsMatrix)
             {
                 for (int j = 0; j < correlationsAnalyses.PartialCorrelationsMatrix.Length; j++)
-                    Console.Write("{0,6}  ", Math.Round(correlationsAnalyses.PartialCorrelationsMatrix[u][j], 4));
+                    Console.Write("{0,6}  ", Math.Round(t[j], 4));
                 Console.WriteLine();
             }
             Console.WriteLine();
