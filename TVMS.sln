@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TVMS", "TVMS\TVMS.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestForTable", "..\Новая папка\TestForTable\TestForTable.csproj", "{BED7ABA3-A3D7-40FB-B55F-8BE4F02A09FC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MathStatisticsLibrary", "MathStatisticsLibrary\MathStatisticsLibrary.csproj", "{5A0BC32C-F935-402E-9DEF-DD767C730F12}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfDemo", "WpfDemo\WpfDemo.csproj", "{EE9CD215-E05E-4EAA-9913-9942FDD2864E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{BED7ABA3-A3D7-40FB-B55F-8BE4F02A09FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BED7ABA3-A3D7-40FB-B55F-8BE4F02A09FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BED7ABA3-A3D7-40FB-B55F-8BE4F02A09FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A0BC32C-F935-402E-9DEF-DD767C730F12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A0BC32C-F935-402E-9DEF-DD767C730F12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A0BC32C-F935-402E-9DEF-DD767C730F12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A0BC32C-F935-402E-9DEF-DD767C730F12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE9CD215-E05E-4EAA-9913-9942FDD2864E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE9CD215-E05E-4EAA-9913-9942FDD2864E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE9CD215-E05E-4EAA-9913-9942FDD2864E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE9CD215-E05E-4EAA-9913-9942FDD2864E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

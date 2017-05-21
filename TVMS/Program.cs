@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using MathStatisticsLibrary;
 
 namespace TVMS
 {
@@ -73,6 +73,7 @@ namespace TVMS
             var transpMatrix = MatrixFunction.TransposeMatrix(matrix);
             Dictionary<double, double> laplasMatrix = ReadLaplasMatrix("2.txt");
 
+            Console.WriteLine("Описательная статистика");
             for (int k = 0; k < m; ++k)
             {
                 PearsonConsentCriterion pcc = new PearsonConsentCriterion(transpMatrix[k].Take(n).ToArray(), laplasMatrix);
@@ -97,7 +98,10 @@ namespace TVMS
                 Console.WriteLine("Табличный критерий Колмогорова = 1,950\n\n");
                 Console.WriteLine();
             }
+            Console.WriteLine("Нажмите, чтобы увидеть далее...");
+            Console.ReadLine();
 
+            Console.WriteLine("Корреляционный анализ");
             CorrelationsAnalysis correlationsAnalyses = new CorrelationsAnalysis(transpMatrix, m - 1);
             Console.WriteLine("Матрица корреляции");
             foreach (double[] correlationCoef in correlationsAnalyses.PairCorrelationsMatrix)
@@ -138,6 +142,9 @@ namespace TVMS
             }
             Console.WriteLine();
 
+            Console.WriteLine("Нажмите, чтобы увидеть далее...");
+            Console.ReadLine();
+            Console.WriteLine("Регрессионный анализ");
             RegressionAnalysis ra = new RegressionAnalysis(matrix, m - 1);
             Console.WriteLine("Коэффициенты регрессии:");
             for (int i = 0; i < ra.RegressionCoefficients.Length; i++)

@@ -1,0 +1,38 @@
+﻿<Window x:Class="WpfDemo.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfDemo"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="709.598" Width="1156.655" ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Label x:Name="label" Content="Матрица выборки:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
+        <TextBox x:Name="tbMatrixFilePath" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="477" Margin="129,13,0,0"/>
+        <Button x:Name="btnChooseFile" Content="Выберите файл" Click="BtnChooseFile_OnClick" HorizontalAlignment="Left" Margin="611,13,0,0" VerticalAlignment="Top" Width="111" Height="23"/>
+
+
+        <GroupBox x:Name="groupBox" Header="Корреляционный анализ" HorizontalAlignment="Left" Margin="0,61,0,0" VerticalAlignment="Top" Height="297" Width="562">
+            <Grid>
+                <TextBox x:Name="tbCorrelations" HorizontalAlignment="Left" Height="222" Margin="10,10,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="530"/>
+            </Grid>
+        </GroupBox>
+
+        <GroupBox x:Name="groupBox1" Header="Регрессионный анализ" HorizontalAlignment="Left" Margin="567,61,0,0" VerticalAlignment="Top" Height="297" Width="574">
+            <Grid>
+                <TextBox x:Name="tbRegressions" HorizontalAlignment="Left" Height="219" Margin="10,10,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="542"/>
+            </Grid>
+        </GroupBox>
+        <Button x:Name="btnCalc" Content="Обработать данные" Click="BtnCalc_OnClick" HorizontalAlignment="Left" Margin="780,13,0,0" VerticalAlignment="Top" Width="154" Height="23"/>
+        <GroupBox x:Name="groupBox2" Header="Описательная статистика" HorizontalAlignment="Left" Margin="0,363,0,0" VerticalAlignment="Top" Height="297" Width="562">
+            <Grid>
+                <TextBox x:Name="tbDescript" HorizontalAlignment="Left" Height="219" Margin="10,10,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="530"/>
+            </Grid>
+        </GroupBox>
+        <GroupBox x:Name="groupBox2_Copy" Header="Прогноз" HorizontalAlignment="Left" Margin="567,363,0,0" VerticalAlignment="Top" Height="308" Width="574">
+            <Grid>
+                <TextBox x:Name="tbForecast" HorizontalAlignment="Left" Height="219" Margin="10,10,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="542"/>
+            </Grid>
+        </GroupBox>
+    </Grid>
+</Window>

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TVMS
+namespace MathStatisticsLibrary
 {
     public class PearsonConsentCriterion
     {
