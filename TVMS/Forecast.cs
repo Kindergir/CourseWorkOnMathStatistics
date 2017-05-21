@@ -11,41 +11,46 @@ namespace TVMS
         public double[] Value { get; private set; }
 
         private double[][] dataMatrix;
-        private double[] x0 = {1, 0.92, 0.83, 5.82, 1.2, 4.25, 1.01, 1.01, 1};
+        private double[] x0 = {1, 0.92, 0.83, 5.82, 1.2, 4.25, 1.01, 1.01, 1, 1};
+        private int resultParameterNumber;
 
-        public Forecast(double[][] matrix)
+        public Forecast(double[][] matrix, int resultParameterNumber)
         {
             dataMatrix = matrix;
+            this.resultParameterNumber = resultParameterNumber;
             Prognoz();
         }
 
         private void Prognoz()
         {
-            int n = dataMatrix.Length, m = dataMatrix[0].Length;
-            double[] result = new double[m];
-            double[] Y = new double[n];
-            double[][] A1 = new double[n][];
-            for (int i = 0; i < n; i++)
+            var transpMatrix = MatrixFunction.TransposeMatrix(dataMatrix);
+            int parametersCount = dataMatrix[0].Length, measuresCount = dataMatrix.Length;
+
+            double[] resultParameter = transpMatrix[resultParameterNumber];
+            List<double>[] withoutResultParameter = new List<double>[measuresCount];
+
+            for (int i = 0; i < measuresCount; i++)
             {
-                A1[i] = new double[m];
-                Y[i] = dataMatrix[i][0];
+                withoutResultParameter[i] = new List<double>();
+                withoutResultParameter[i].Add(1);
+
+                for (int j = 0; j < parametersCount; ++j)
+                    if (j != resultParameterNumber)
+                        withoutResultParameter[i].Add(dataMatrix[i][j]);
             }
 
-            for (int i = 0; i < n; i++)
-                A1[i][0] = 1;
+            var xMatrix = withoutResultParameter.Select(o => o.ToArray()).ToArray();
+            var transpWithoutMatrix = MatrixFunction.TransposeMatrix(xMatrix);
+            RegressionAnalysis ra = new RegressionAnalysis(dataMatrix, resultParameterNumber);
 
-            for (int i = 0; i < n; i++)
-                for (int j = 1; j < m; j++)
-                    A1[i][j] = dataMatrix[i][j];
-
-            result = MatrixFunction.MatrixVectorMultiplication((MatrixFunction.MultiplicateMatrix(MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(A1), A1)), MatrixFunction.TransposeMatrix(A1))), Y);
-            double Qost = MatrixFunction.SumOfVectorCoordinatesSquares(MatrixFunction.VectorsDifference(Y, MatrixFunction.MatrixVectorMultiplication(A1, result)));
-            double s = Math.Sqrt(Qost / (n - m - 1));
+            var result = ra.RegressionCoefficients;
+            double s = ra.ResidualDispersion;
             double t = 4.587;
             double[] a = new double[2];
-            a[0] = MatrixFunction.ScalarProductOfVectors(x0, result) - t * s * Math.Sqrt(MatrixFunction.ScalarProductOfVectors(MatrixFunction.TransposeMatrixVectorProduct(x0, MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(A1), A1))), x0));
-            a[1] = MatrixFunction.ScalarProductOfVectors(x0, result) + t * s * Math.Sqrt(MatrixFunction.ScalarProductOfVectors(MatrixFunction.TransposeMatrixVectorProduct(x0, MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(MatrixFunction.TransposeMatrix(A1), A1))), x0));
+            a[0] = MatrixFunction.ScalarProductOfVectors(x0, result) - t * s * Math.Sqrt(MatrixFunction.ScalarProductOfVectors(MatrixFunction.TransposeMatrixVectorProduct(x0, MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(transpWithoutMatrix, xMatrix))), x0));
+            a[1] = MatrixFunction.ScalarProductOfVectors(x0, result) + t * s * Math.Sqrt(MatrixFunction.ScalarProductOfVectors(MatrixFunction.TransposeMatrixVectorProduct(x0, MatrixFunction.InverseMatrix(MatrixFunction.MultiplicateMatrix(transpWithoutMatrix, xMatrix))), x0));
             Value = a;
         }
+
     }
 }

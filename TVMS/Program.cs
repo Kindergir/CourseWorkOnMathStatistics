@@ -99,7 +99,6 @@ namespace TVMS
             }
 
             CorrelationsAnalysis correlationsAnalyses = new CorrelationsAnalysis(transpMatrix, m - 1);
-            //WriteMatrix(@"D:\Универ\3 курс\2 семестр\Тер вер и мат стат\PairCorrelationMatrix.csv", correlationsAnalyses.PairCorrelationsMatrix);
             Console.WriteLine("Матрица корреляции");
             foreach (double[] correlationCoef in correlationsAnalyses.PairCorrelationsMatrix)
             {
@@ -140,14 +139,14 @@ namespace TVMS
             Console.WriteLine();
 
             RegressionAnalysis ra = new RegressionAnalysis(matrix, m - 1);
-            //Console.WriteLine("Коэффициенты регрессии:");
-            //for (int i = 0; i < ra.RegressionCoefficients.Length; i++)
-            //{
-            //    if (i == 0)
-            //        Console.WriteLine("a = {0}", ra.RegressionCoefficients[i]);
-            //    else
-            //        Console.WriteLine("b{0} = {1}", i, ra.RegressionCoefficients[i]);
-            //}
+            Console.WriteLine("Коэффициенты регрессии:");
+            for (int i = 0; i < ra.RegressionCoefficients.Length; i++)
+            {
+                if (i == 0)
+                    Console.WriteLine("a = {0}", ra.RegressionCoefficients[i]);
+                else
+                    Console.WriteLine("b{0} = {1}", i, ra.RegressionCoefficients[i]);
+            }
 
             Console.WriteLine("Значимость коэффициентов регрессии:");
             for (int i = 0; i < m; i++)
@@ -165,10 +164,7 @@ namespace TVMS
             for (int u = 0; u < m; u++)
                 Console.WriteLine("x{0} = {1}", (u + 1), elast[u]);
 
-            //double[] X0 = { 1, 0.92, 0.83, 5.82, 1.2, 4.25, 1.01, 1.01, 1 };
-            //double[] resultat = Prognoz(matrix, X0);
-
-            Forecast f = new Forecast(matrix);
+            Forecast f = new Forecast(matrix, m - 1);
             Console.WriteLine("Прогнозирование");
             Console.WriteLine(f.Value[0] + " < y < " + f.Value[1]);
             Console.WriteLine();

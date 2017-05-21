@@ -109,12 +109,24 @@ namespace TVMS
             return product;
         }
 
+        public static double[] MultiplicateMatrix(double[] a, double[] b)
+        {
+            if (a.Length != b.Length)
+                throw new ArgumentException("Vectors can not be multiplied");
+
+            var product = new List<double>();
+            for (int i = 0; i < a.Length; ++i)
+                product.Add(a[i] * b[i]);
+            return product.ToArray();
+        }
+
         public static double[] MatrixVectorMultiplication(double[][] matrix, double[] vector)
         {
             if (matrix.Length != 0 && vector.Length != matrix[0].Length)
                 throw new ArgumentException("Matrices can not be multiplied");
 
-            double[] product = new double[vector.Length];
+            double[] product = new double[matrix.Length];
+
             for (int i = 0; i < matrix.Length; ++i)
                 for (int k = 0; k < matrix[i].Length; ++k)
                     product[i] += matrix[i][k] * vector[k];
